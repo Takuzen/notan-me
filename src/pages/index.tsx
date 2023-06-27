@@ -94,7 +94,7 @@ export default function Home() {
         <div className="flex flex-col items-center mt-12">
           <div className="w-full text-end">
             <textarea
-              className="w-full h-32 resize-none focus:outline-none"
+              className="w-full h-32 resize-none focus:outline-none tracking-wider leading-relaxed"
               placeholder="6月27日 夏至 次候 菖蒲華さく"
               value={note}
               onChange={handleNoteChange}
@@ -104,14 +104,21 @@ export default function Home() {
 
     <div
       id="chatbtn"
-      className={`text-center rounded-lg border fixed bottom-5 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg ${
-        chatExpanded ? 'h-1/2 bottom-0' : ''
+      className={`cursor-pointer rounded-lg border fixed bottom-5 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg ${
+        chatExpanded ? 'h-2/3 sm:h-1/2 bottom-0' : ''
       }`}
       onClick={!chatExpanded ? handleChatToggle : undefined}
     >
     {chatExpanded ? (
     <>
-      <div className="chat-messages">
+    <button
+      className="absolute -top-4 right-6 transform translate-x-full px-3 py-1 rounded-full bg-gray-400 text-white"
+      onClick={handleChatToggle}
+    >
+      ↓
+    </button>
+    <p className="tracking-wider leading-relaxed">こんにちは、<br/>あなたのパートナーAIのヤメです。<br/><br/>何か悩んでいますか？</p>
+      <div className="chat-messages tracking-wider leading-relaxed">
         {chatMessages.map((message, index) => (
           <p key={index} className={`text-left ${message.role === 'assistant' ? 'text-black' : 'text-gray-500'}`}>{message.content}</p>
         ))}
@@ -125,15 +132,18 @@ export default function Home() {
             handleChatSubmit(event);
           }
         }}
-        className="w-full rounded-lg p-2 mt-2 focus:outline-none"
-        placeholder="Type a message"
+        className="w-full rounded-lg mt-2 focus:outline-none tracking-wider leading-relaxed"
+        placeholder=""
       />
   </>
 ) : (
+  
   <p className="text-md opacity-60">
     <span className="ball"></span> いま何を考えていますか?
   </p>
+  
 )}
+    
     </div>
       </div>
 
