@@ -10,6 +10,7 @@ export default function Document() {
         <NextScript />
       </body>
       <Script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></Script>
+      <Script src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></Script>
     </Html>
   )
 }

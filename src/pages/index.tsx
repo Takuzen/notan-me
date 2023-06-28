@@ -5,6 +5,19 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'ion-icon': {
+        name?: string;
+        size?: 'small' | 'large' | 'default';
+        color?: string;
+        // Add other properties as required
+      };
+    }
+  }
+}
+
 export default function Home() {
   const [note, setNote] = useState('');
   const [chatExpanded, setChatExpanded] = useState(false);
