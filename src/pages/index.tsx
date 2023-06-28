@@ -10,6 +10,7 @@ export default function Home() {
   const [chatExpanded, setChatExpanded] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ role: string, content: string }>>([]);
+  const [isToggled, setIsToggled] = useState(false);
 
   useEffect(() => {
     const firebaseConfig = {
@@ -67,6 +68,10 @@ export default function Home() {
     setNote(event.target.value);
   };
 
+  const handleToggle = () => {
+    setIsToggled(!isToggled);
+  };
+
   return (
     <main className="p-8 sm:p-24">
     <div className="flex flex-col">
@@ -103,50 +108,61 @@ export default function Home() {
         </div>
       </div>
 
-  <div
-    id="chatbtn"
-    className={`z-10 cursor-pointer text-center rounded-lg border fixed bottom-5 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg ${
-      chatExpanded ? 'h-2/3 sm:h-1/2 bottom-0' : ''
-    }`}
-    onClick={!chatExpanded ? handleChatToggle : undefined}
-  >
-  {chatExpanded ? (
-  <>
-  <button
-    className="absolute -top-4 right-6 transform translate-x-full px-3 py-1 rounded-full bg-gray-400 text-white"
-    onClick={handleChatToggle}
-  >
-    ↓
-  </button>
-  <p className="tracking-wider leading-relaxed font-mincho text-start mt-4 cursor-auto">こんにちは、<br/>あなたのパートナーAIのジルです。<br/><br/>何でも話してください。</p>
-  <div className="chat-messages tracking-wider leading-relaxed">
-    {chatMessages.map((message, index) => (
-      <p key={index} className={`text-left ${message.role === 'assistant' ? 'text-black' : 'text-gray-500'}`}>{message.content}</p>
-    ))}
-  </div>
-  <textarea
-    value={chatInput}
-    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setChatInput(event.target.value)}
-    onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === 'Enter' && event.shiftKey) {
-        event.preventDefault();
-        handleChatSubmit(event);
-      }
-    }}
-    className="z-20 w-full h-screen focus:caret-emerald-900 focus:outline-none rounded-lg mt-6 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-900"
-    placeholder=""
-    autoFocus/>
-</>
-) : (
+      <div
+        id="chatbtn"
+        className={`z-10 cursor-pointer text-center rounded-t-lg border fixed bottom-0 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg ${
+          chatExpanded ? 'h-2/3 sm:h-1/2 bottom-0' : ''
+          }`}
+        onClick={!chatExpanded ? handleChatToggle : undefined}
+        >
+        {chatExpanded ? (
+        <>
+        <button
+          className="absolute -top-4 right-6 transform translate-x-full px-3 py-1 rounded-full bg-gray-400 text-white"
+          onClick={handleChatToggle}
+        >
+          ↓
+        </button>
+        <p className="tracking-wider leading-relaxed font-mincho text-start mt-4 cursor-auto">こんにちは、<br/>あなたのパートナーAIのジルです。<br/><br/>何でも話してください。</p>
+        <div className="chat-messages tracking-wider leading-relaxed my-5">
+          {chatMessages.map((message, index) => (
+            <p key={index} className={`text-left ${message.role === 'assistant' ? 'text-black' : 'text-gray-500'}`}>{message.content}</p>
+          ))}
+        </div>
+        <textarea
+          value={chatInput}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setChatInput(event.target.value)}
+          onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+            if (event.key === 'Enter' && event.shiftKey) {
+              event.preventDefault();
+              handleChatSubmit(event);
+            }
+          }}
+          className="z-20 w-full h-full max-h-screen focus:caret-emerald-500 focus:outline-none rounded-lg mt-6 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-500"
+          placeholder=""
+          autoFocus
+        />
+        {/* 
+        <div
+          className="flex self-center absolute bottom-10 right-10 z-50 bg-red-500 p-3 rounded-full"
+        >
+          <label>
+            Toggle
+            <input type="checkbox" checked={isToggled} onChange={handleToggle} />
+          </label>
+        </div>
+      */}
+      </>
+      ) : (
 
-<p className="text-md opacity-60 font-mincho">
-  <span className="ball"></span> いま何を考えていますか?
-</p>
+      <p className="text-md opacity-60 font-mincho">
+        <span className="ball"></span> いま何を考えていますか?
+      </p>
 
-)}
-  
-  </div>
-    </div>
+      )}
+        
+      </div>
+        </div>
 
     <style jsx>{`
       .ball {
@@ -181,6 +197,20 @@ export default function Home() {
           transform: translate(0, 0);
           background-color: #728fce;
         }
+      }
+
+      .toggle-container {
+        appearance: none;
+        position: relative;
+        z-index: 30;
+        padding: 10px;
+        background-color: white;
+      }
+    
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     `}</style>
   </main>
