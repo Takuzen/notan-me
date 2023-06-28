@@ -119,7 +119,7 @@ export default function Home() {
         <div className="w-full text-end">
           <textarea
             className="w-full h-screen focus:outline-none resize-none tracking-wider leading-relaxed font-minch bg-transparent"
-            placeholder="6月28日 夏至 次候 菖蒲華さく"
+            placeholder="6月29日 夏至 次候 菖蒲華さく"
             value={note}
             onChange={handleNoteChange}
           />
