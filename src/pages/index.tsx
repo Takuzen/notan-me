@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image'
 import Link from 'next/link'
 import { initializeApp } from 'firebase/app';
@@ -11,6 +11,7 @@ export default function Home() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ role: string, content: string }>>([]);
   const [isToggled, setIsToggled] = useState(false);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null); 
 
   useEffect(() => {
     const firebaseConfig = {
@@ -30,6 +31,12 @@ export default function Home() {
 
   }, []);
 
+  const autoResizeTextArea = () => {
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = 'auto';
+      textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
+    }
+  };
   
   const handleChatToggle = () => {
     setChatExpanded(!chatExpanded);
@@ -39,7 +46,8 @@ export default function Home() {
     event.preventDefault();
     if (chatInput.trim().length > 0) {
       setChatMessages([...chatMessages, {role: 'user', content: chatInput}]);
-  
+      setChatInput('');
+
       try {
         const res = await fetch('/api/chatgpt', {
           method: 'POST',
@@ -49,10 +57,9 @@ export default function Home() {
           body: JSON.stringify({ message: chatInput })
         });
         const data = await res.json();
-        console.log(data);
         
         setChatMessages(prevChatMessages => [...prevChatMessages, {role: 'assistant', content: data.message}]);
-        setChatInput('');
+
       } catch (error: unknown) {
         if (error instanceof Error) {
           console.error(`Error with OpenAI API request: ${error.message}`);
@@ -62,6 +69,17 @@ export default function Home() {
       }
       
     }
+  };
+
+  const handleButtonClick = () => {
+    // Create a fake event to send to the handleChatSubmit function.
+    const fakeEvent = {
+      preventDefault: () => {},
+      key: 'Enter',
+      shiftKey: true
+    };
+
+    handleChatSubmit(fakeEvent as unknown as React.KeyboardEvent<HTMLTextAreaElement>);
   };
 
   const handleNoteChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -109,8 +127,8 @@ export default function Home() {
       </div>
 
       <div
-        id="chatbtn"
-        className={`z-10 cursor-pointer text-center rounded-t-lg border fixed bottom-0 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg ${
+        id="chat-container"
+        className={`z-10 cursor-pointer text-center rounded-t-lg border fixed bottom-0 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg overflow-y-auto ${
           chatExpanded ? 'h-2/3 sm:h-1/2 bottom-0' : ''
           }`}
         onClick={!chatExpanded ? handleChatToggle : undefined}
@@ -118,7 +136,7 @@ export default function Home() {
         {chatExpanded ? (
         <>
         <button
-          className="absolute -top-4 right-6 transform translate-x-full px-3 py-1 rounded-full bg-gray-400 text-white"
+          className="absolute -top-1 right-5 px-3 py-1 rounded-full bg-gray-400 text-white"
           onClick={handleChatToggle}
         >
           ↓
@@ -126,10 +144,14 @@ export default function Home() {
         <p className="tracking-wider leading-relaxed font-mincho text-start mt-4 cursor-auto">こんにちは、<br/>あなたのパートナーAIのジルです。<br/><br/>何でも話してください。</p>
         <div className="chat-messages tracking-wider leading-relaxed my-5">
           {chatMessages.map((message, index) => (
-            <p key={index} className={`text-left ${message.role === 'assistant' ? 'text-black' : 'text-gray-500'}`}>{message.content}</p>
+            <p key={index} className={`text-left ${message.role === 'assistant' ? 'text-black' : 'text-gray-500'} mb-3`}>{message.content}</p>
           ))}
         </div>
+        <div className="chat-input-container relative flex flex-col h-full">
+      <div className='flex flex-col'>
         <textarea
+          ref={textAreaRef}
+          onInput={autoResizeTextArea}
           value={chatInput}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setChatInput(event.target.value)}
           onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -138,10 +160,22 @@ export default function Home() {
               handleChatSubmit(event);
             }
           }}
-          className="z-20 w-full h-full max-h-screen focus:caret-emerald-500 focus:outline-none rounded-lg mt-6 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-500"
+          className="z-20 resize-none w-full focus:caret-emerald-500 focus:outline-none rounded-lg mt-5 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-500"
           placeholder=""
           autoFocus
+          style={{ overflow: 'hidden' }}
         />
+            <button
+              className="submit-button w-[40px] self-end pr-3 pb-1 pl-3 pt-2 text-white bg-ja-purple bordernone rounded-lg relative bottom-0 right-0 hover:opacity-70 mb-3 mr-3" // Added mb-3 and mr-3 here for margin-bottom and margin-right
+              onClick={handleButtonClick}
+            >
+              <ion-icon name="send"></ion-icon>
+            </button>
+      </div>
+
+
+      </div>
+        
         {/* 
         <div
           className="flex self-center absolute bottom-10 right-10 z-50 bg-red-500 p-3 rounded-full"
