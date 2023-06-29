@@ -1,7 +1,14 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { VercelRequest, VercelResponse } from "@vercel/node";
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const { message } = req.body;
+interface MessageRequestBody {
+  message: string;
+}
+
+export default async function (req: VercelRequest, res: VercelResponse) {
+  console.log('Running on Edge Runtime:', !!(globalThis as any).EdgeRuntime);
+
+  const { message } = req.body as MessageRequestBody;
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -18,10 +25,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   const data = await response.json();
-  
-  if (!response.ok) {
-    return res.status(response.status).json(data);
-  }
 
-  return res.status(200).json({ message: data.choices[0].message.content });
-};
+  if (!response.ok) {
+    res.status(response.status).json(data);
+  } else {
+    res.status(200).json({ message: data.choices[0].message.content });
+  }
+}
