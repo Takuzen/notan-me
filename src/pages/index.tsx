@@ -11,6 +11,7 @@ export default function Home() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ role: string, content: string }>>([]);
   const [isToggled, setIsToggled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null); 
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function Home() {
     if (chatInput.trim().length > 0) {
       setChatMessages([...chatMessages, {role: 'user', content: chatInput}]);
       setChatInput('');
+      setIsLoading(true);
 
       try {
         const res = await fetch('/api/chatgpt', {
@@ -67,7 +69,7 @@ export default function Home() {
           console.error(`An unexpected error occurred: ${error}`);
         }
       }
-      
+      setIsLoading(false);
     }
   };
 
@@ -118,8 +120,8 @@ export default function Home() {
       <div className="flex flex-col items-center mt-12">
         <div className="w-full text-end">
           <textarea
-            className="w-full h-screen focus:outline-none resize-none tracking-wider leading-relaxed font-minch bg-transparent"
-            placeholder="6月29日 夏至 次候 菖蒲華さく"
+            className="w-full h-screen focus:outline-none caret-black focus:caret-black resize-none tracking-wider leading-relaxed font-minch bg-transparent no-tap-highlighting"
+            placeholder="7月1日 夏至 末候 半夏生ず"
             value={note}
             onChange={handleNoteChange}
           />
@@ -128,7 +130,7 @@ export default function Home() {
 
       <div
         id="chat-container"
-        className={`z-10 cursor-pointer text-center rounded-t-lg border fixed bottom-0 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg overflow-y-auto ${
+        className={`z-10 bg-white cursor-pointer text-center rounded-t-lg border fixed bottom-0 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg overflow-y-auto ${
           chatExpanded ? 'h-2/3 sm:h-1/2 bottom-0' : ''
           }`}
         onClick={!chatExpanded ? handleChatToggle : undefined}
@@ -160,7 +162,7 @@ export default function Home() {
               handleChatSubmit(event);
             }
           }}
-          className="z-20 resize-none w-full focus:caret-emerald-500 focus:outline-none rounded-lg mt-5 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-500"
+          className="z-20 resize-none w-full focus:caret-emerald-500 focus:outline-none rounded-lg mt-5 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-500 no-tap-highlighting"
           placeholder=""
           autoFocus
           style={{ overflow: 'hidden' }}
@@ -168,11 +170,23 @@ export default function Home() {
             <button
               className="submit-button w-[40px] fill-white self-end pr-3 pb-3 pl-3 pt-3 bg-ja-purple bordernone rounded-lg relative bottom-0 right-0 hover:opacity-70 mb-3 mr-3" // Added mb-3 and mr-3 here for margin-bottom and margin-right
               onClick={handleButtonClick}
+              disabled={isLoading} // Disable the button while loading
             >
-              <svg viewBox="0 0 512 512"><path d="m476.59 227.05-.16-.07L49.35 49.84A23.56 23.56 0 0 0 27.14 52 24.65 24.65 0 0 0 16 72.59v113.29a24 24 0 0 0 19.52 23.57l232.93 43.07a4 4 0 0 1 0 7.86L35.53 303.45A24 24 0 0 0 16 327v113.31A23.57 23.57 0 0 0 26.59 460a23.94 23.94 0 0 0 13.22 4 24.55 24.55 0 0 0 9.52-1.93L476.4 285.94l.19-.09a32 32 0 0 0 0-58.8z"/></svg>
+            {isLoading ? (
+              // Render loading animation while loading
+              <div className="loading-animation">
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            ) : (
+            // Render submit button icon when not loading
+              <svg viewBox="0 0 512 512">
+                <path d="m476.59 227.05-.16-.07L49.35 49.84A23.56 23.56 0 0 0 27.14 52 24.65 24.65 0 0 0 16 72.59v113.29a24 24 0 0 0 19.52 23.57l232.93 43.07a4 4 0 0 1 0 7.86L35.53 303.45A24 24 0 0 0 16 327v113.31A23.57 23.57 0 0 0 26.59 460a23.94 23.94 0 0 0 13.22 4 24.55 24.55 0 0 0 9.52-1.93L476.4 285.94l.19-.09a32 32 0 0 0 0-58.8z" />
+              </svg>
+            )}
             </button>
       </div>
-
 
       </div>
         
@@ -246,6 +260,44 @@ export default function Home() {
         align-items: center;
         justify-content: center;
       }
+
+      .loading-animation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+      }
+      
+      .loading-animation div {
+        width: 8px;
+        height: 8px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        animation: loading-animation 1.2s infinite ease-in-out;
+      }
+      
+      .loading-animation div:nth-child(1) {
+        animation-delay: 0s;
+      }
+      
+      .loading-animation div:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+      
+      .loading-animation div:nth-child(3) {
+        animation-delay: 0.8s;
+      }
+      
+      @keyframes loading-animation {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(0.6);
+        }
+      }
+      
     `}</style>
   </main>
   )
