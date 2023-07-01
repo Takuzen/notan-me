@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image'
 import Link from 'next/link'
@@ -120,8 +121,9 @@ export default function Home() {
       <div className="flex flex-col items-center mt-12">
         <div className="w-full text-end">
           <textarea
+            id='lptextarea'
             className="w-full h-screen focus:outline-none caret-black focus:caret-black resize-none tracking-wider leading-relaxed font-minch bg-transparent no-tap-highlighting"
-            placeholder="7月1日 夏至 末候 半夏生ず"
+            placeholder="7月2日 夏至 末候 半夏生ず"
             value={note}
             onChange={handleNoteChange}
           />
@@ -131,14 +133,14 @@ export default function Home() {
       <div
         id="chat-container"
         className={`z-10 bg-white cursor-pointer text-center rounded-t-lg border fixed bottom-0 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg overflow-y-auto ${
-          chatExpanded ? 'h-2/3 sm:h-1/2 bottom-0' : ''
+          chatExpanded ? 'h-[19rem] bottom-0' : ''
           }`}
         onClick={!chatExpanded ? handleChatToggle : undefined}
         >
         {chatExpanded ? (
         <>
         <button
-          className="absolute -top-1 right-5 px-3 py-1 rounded-full bg-gray-400 text-white"
+          className="absolute -top-1 right-[7.5rem] sm:right-[17rem] lg:right-[15rem] px-12 py-0 rounded-full bg-gray-400 text-white"
           onClick={handleChatToggle}
         >
           ↓
