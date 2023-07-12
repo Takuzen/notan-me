@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image'
 import Link from 'next/link'
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
 export default function Home() {
@@ -13,7 +13,8 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<Array<{ role: string, content: string }>>([]);
   const [isToggled, setIsToggled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null); 
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [showCommandModal, setShowCommandModal] = useState(false);
 
   useEffect(() => {
     const firebaseConfig = {
@@ -44,33 +45,34 @@ export default function Home() {
     setChatExpanded(!chatExpanded);
   };
 
+  const processCommand = (command: string) => {
+    // If the command starts with a slash, open the command window
+    if (command.startsWith("/")) {
+      // split the command into parts
+      const parts = command.slice(1).split(' ');
+
+      // the actual command is the first part
+      const cmd = parts[0];
+
+      // optional parameters to the command are the rest of the parts
+      const params = parts.slice(1);
+
+      console.log(`Command: ${cmd}, Params: ${params}`);
+      setShowCommandModal(true);
+    } else {
+      // If the command doesn't start with a slash, close the command window
+      setShowCommandModal(false);
+    }
+  };
+
   const handleChatSubmit = async (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
     if (chatInput.trim().length > 0) {
-      setChatMessages([...chatMessages, {role: 'user', content: chatInput}]);
-      setChatInput('');
-      setIsLoading(true);
-
-      try {
-        const res = await fetch('/api/chatgpt', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ message: chatInput })
-        });
-        const data = await res.json();
-        
-        setChatMessages(prevChatMessages => [...prevChatMessages, {role: 'assistant', content: data.message}]);
-
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error(`Error with OpenAI API request: ${error.message}`);
-        } else {
-          console.error(`An unexpected error occurred: ${error}`);
-        }
+      if (chatInput.startsWith("/")) {
+        processCommand(chatInput);
+      } else {
+        // ...existing code...
       }
-      setIsLoading(false);
     }
   };
 
@@ -82,69 +84,79 @@ export default function Home() {
       shiftKey: true
     };
 
-    handleChatSubmit(fakeEvent as unknown as React.KeyboardEvent<HTMLTextAreaElement>);
+    handleChatSubmit(fakeEvent as React.KeyboardEvent<HTMLTextAreaElement>);
   };
 
   const handleNoteChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNote(event.target.value);
+    processCommand(event.target.value);
   };
 
   const handleToggle = () => {
     setIsToggled(!isToggled);
   };
 
+  const closeModal = () => {
+    setShowCommandModal(false);
+  };
+
   return (
     <main className="p-8 sm:p-24">
+    {/* modal */}
+    {showCommandModal && (
+        <div className="absolute top-0 left-0 z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-sm px-4 text-left overflow-hidden border shadow-md transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="flex flex-col gap-3">
+                <button type="button" className="w-full inline-flex justify-center rounded-md border border-transparent px-4 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:text-sm" onClick={closeModal}>
+                  ジルを呼ぶ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="flex flex-col">
       <div className="flex w-full justify-between items-center">
         <p className="font-serif text-2xl font-bold">notan</p>
-        <p className="hidden font-serif text-1xl font-semibold text-gray-400">
-          <Link href="/">開発物語</Link>
-        </p>
-        <p className="hidden font-serif text-1xl font-semibold text-gray-400">
-          ログイン
-        </p>
-        <Link href="/beta_mypage">
-          <div className="pt-2 cursor-pointer">
-            <Image
-              className="object-contain"
-              src="/library-outline.svg"
-              alt="Library Logo"
-              width={30}
-              height={30}
-              priority
-            />
-          </div>
-        </Link>
+        <div className='flex gap-10'>
+          <Link href="/beta_mypage">
+            <div className="pt-2 cursor-pointer">
+              <Image
+                className="object-contain"
+                src="/library-outline.svg"
+                alt="Library Logo"
+                width={30}
+                height={30}
+                priority
+              />
+            </div>
+          </Link>
+          <p><span className="ball" onClick={handleChatToggle}></span></p>
+        </div>
       </div>
 
       <div className="flex flex-col items-center mt-12">
         <div className="w-full text-end">
-          <textarea
-            id='lptextarea'
-            className="w-full h-screen focus:outline-none caret-black focus:caret-black resize-none tracking-wider leading-relaxed font-minch bg-transparent no-tap-highlighting"
-            placeholder="7月2日 夏至 末候 半夏生ず"
-            value={note}
-            onChange={handleNoteChange}
-          />
+            <textarea
+              id='lptextarea'
+              className="w-full h-full focus:outline-none caret-black focus:caret-black resize-none tracking-wider leading-relaxed font-minch bg-transparent no-tap-highlighting"
+              placeholder="7月7日 小暑 初候 温風至る"
+              value={note}
+              style={{ height: `${textAreaRef.current?.scrollHeight}px` }}
+              onChange={handleNoteChange}
+              onInput={autoResizeTextArea}
+            />
         </div>
-      </div>
-
-      <div
+        <div
         id="chat-container"
-        className={`z-10 bg-white cursor-pointer text-center rounded-t-lg border fixed bottom-0 left-0 right-0 mx-auto w-11/12 sm:w-9/12 lg:w-7/12 xl:w-5/12 p-5 shadow-lg overflow-y-auto ${
-          chatExpanded ? 'h-[19rem] bottom-0' : ''
+        className={`z-10 w-full bg-white cursor-pointer text-center ${
+          chatExpanded ? 'h-[19rem]' : 'hidden'
           }`}
-        onClick={!chatExpanded ? handleChatToggle : undefined}
         >
         {chatExpanded ? (
         <>
-        <button
-          className="absolute -top-1 right-[7.5rem] sm:right-[17rem] lg:right-[15rem] px-12 py-0 rounded-full bg-gray-400 text-white"
-          onClick={handleChatToggle}
-        >
-          ↓
-        </button>
         <p className="tracking-wider leading-relaxed font-mincho text-start mt-4 cursor-auto">こんにちは、<br/>あなたのパートナーAIのジルです。<br/><br/>何でも話してください。</p>
         <div className="chat-messages tracking-wider leading-relaxed my-5">
           {chatMessages.map((message, index) => (
@@ -152,67 +164,55 @@ export default function Home() {
           ))}
         </div>
         <div className="chat-input-container relative flex flex-col h-full">
-      <div className='flex flex-col'>
-        <textarea
-          ref={textAreaRef}
-          onInput={autoResizeTextArea}
-          value={chatInput}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setChatInput(event.target.value)}
-          onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-            if (event.key === 'Enter' && event.shiftKey) {
-              event.preventDefault();
-              handleChatSubmit(event);
-            }
-          }}
-          className="z-20 resize-none w-full focus:caret-emerald-500 focus:outline-none rounded-lg mt-5 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-500 no-tap-highlighting"
-          placeholder=""
-          autoFocus
-          style={{ overflow: 'hidden' }}
-        />
-            <button
-              className="submit-button w-[40px] fill-white self-end pr-3 pb-3 pl-3 pt-3 bg-ja-purple bordernone rounded-lg relative bottom-0 right-0 hover:opacity-70 mb-3 mr-3" // Added mb-3 and mr-3 here for margin-bottom and margin-right
-              onClick={handleButtonClick}
-              disabled={isLoading} // Disable the button while loading
-            >
-            {isLoading ? (
-              // Render loading animation while loading
-              <div className="loading-animation">
-                <div></div>
-                <div></div>
-                <div></div>
-              </div>
-            ) : (
-            // Render submit button icon when not loading
-              <svg viewBox="0 0 512 512">
-                <path d="m476.59 227.05-.16-.07L49.35 49.84A23.56 23.56 0 0 0 27.14 52 24.65 24.65 0 0 0 16 72.59v113.29a24 24 0 0 0 19.52 23.57l232.93 43.07a4 4 0 0 1 0 7.86L35.53 303.45A24 24 0 0 0 16 327v113.31A23.57 23.57 0 0 0 26.59 460a23.94 23.94 0 0 0 13.22 4 24.55 24.55 0 0 0 9.52-1.93L476.4 285.94l.19-.09a32 32 0 0 0 0-58.8z" />
-              </svg>
-            )}
-            </button>
-      </div>
+        <div className='flex flex-col'>
+          <textarea
+            ref={textAreaRef}
+            onInput={autoResizeTextArea}
+            value={chatInput}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setChatInput(event.target.value)}
+            onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              if (event.key === 'Enter' && event.shiftKey) {
+                event.preventDefault();
+                handleChatSubmit(event);
+              }
+            }}
+            className="z-20 resize-none w-full focus:caret-emerald-500 focus:outline-none rounded-lg mt-5 tracking-wider leading-relaxed bg-transparent text-gray-500 caret-emerald-500 no-tap-highlighting"
+            placeholder=""
+            autoFocus
+            style={{ overflow: 'hidden' }}
+          />
+              <button
+                className="submit-button w-[40px] fill-white self-end pr-3 pb-3 pl-3 pt-3 bg-ja-purple bordernone rounded-lg relative bottom-0 right-0 hover:opacity-70 mb-3 mr-3" // Added mb-3 and mr-3 here for margin-bottom and margin-right
+                onClick={handleButtonClick}
+                disabled={isLoading} // Disable the button while loading
+              >
+              {isLoading ? (
+                // Render loading animation while loading
+                <div className="loading-animation">
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+              ) : (
+              // Render submit button icon when not loading
+                <svg viewBox="0 0 512 512">
+                  <path d="m476.59 227.05-.16-.07L49.35 49.84A23.56 23.56 0 0 0 27.14 52 24.65 24.65 0 0 0 16 72.59v113.29a24 24 0 0 0 19.52 23.57l232.93 43.07a4 4 0 0 1 0 7.86L35.53 303.45A24 24 0 0 0 16 327v113.31A23.57 23.57 0 0 0 26.59 460a23.94 23.94 0 0 0 13.22 4 24.55 24.55 0 0 0 9.52-1.93L476.4 285.94l.19-.09a32 32 0 0 0 0-58.8z" />
+                </svg>
+              )}
+              </button>
+        </div>
 
       </div>
         
-        {/* 
-        <div
-          className="flex self-center absolute bottom-10 right-10 z-50 bg-red-500 p-3 rounded-full"
-        >
-          <label>
-            Toggle
-            <input type="checkbox" checked={isToggled} onChange={handleToggle} />
-          </label>
-        </div>
-      */}
       </>
       ) : (
 
-      <p className="text-md opacity-60 font-mincho">
-        <span className="ball"></span> いま何を考えていますか?
-      </p>
+      <p className=""></p>
 
       )}
-        
+    </div>
       </div>
-        </div>
+    </div>
 
     <style jsx>{`
       .ball {
